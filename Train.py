@@ -2,37 +2,80 @@ from torchvision.transforms.transforms import ToTensor
 
 # from sklearn.metrics import classification_report
 import torch
-from torch import Tensor
+import wandb
 from tqdm import tqdm
+
 
 target = []
 predictions = []
 
 
 # Функция обучения сети
-def train_model(model, train_dataloader, train_dataset, val_dataloader, loss, optimizer, scheduler, num_epochs, path_weigh_save):
+# def train_model(model, loss, optimizer, scheduler, num_epochs, path_weigh_save):
+def train_model(model, train_dataloader, test_dataloader, val_dataloader, loss, optimizer, scheduler, num_epochs,
+                    path_weigh_save):
+
+    '''
+    первый выход - после 2 слоя в резнете
+    второй выход - последний выход
+
+    '''
+    # wandb.init(
+    #     project="googlecolab_ResNet2_outputs_common-loss_output-after-2layer_avg_15tpoch_bs=23",
+    #     entity="maria_mikhalkova",
+    #     config={
+    #         "epochs": 15,
+    #         "batch_size": 23,
+    #         "lr": 1e-4,
+    #         # "dropout": random.uniform(0.01, 0.80),
+    #     })
+    # config = wandb.config
+
     train_loss = []
     train_acc = []
     val_loss = []
     val_acc = []
-    running_acc1 = 0.
+    running_acc_train_2out = 0.
+    running_acc_train_1out = 0.
+    train_acc_2out = []
+    train_acc_1out = []
+
+    val_loss_2out = []
+    val_loss_1out = []
+    val_acc_1out = []
+    val_acc_2out = []
+    running_acc_val_2out = 0.
+    running_acc_val_1out = 0.
     running_acc2 = 0.
+
+    test_loss_2out = []
+    test_loss_1out = []
+    test_acc_1out = []
+    test_acc_2out = []
+    running_acc_test_2out = 0.
+    running_acc_test_1out = 0.
+    # running_acc2 = 0.
+
     for epoch in range(num_epochs):
-        # TODO: изменить макспулинг
         print('Epoch {}/{}:'.format(epoch, num_epochs - 1), flush=True)
 
         # Each epoch has a training and validation phase
-        for phase in ['train', 'val']:
+        for phase in ['train', 'val', 'test']:
             if phase == 'train':
                 dataloader = train_dataloader
                 scheduler.step()
                 model.train()  # Set model to training mode
-            else:
+            elif phase == 'val':
                 dataloader = val_dataloader
                 model.eval()  # Set model to evaluate mode
+            else:
+                dataloader = test_dataloader
+                model.eval()  # Set model to evaluate mode
 
-            running_loss = 0.
-            running_acc = 0.
+            running_loss_2out = 0.
+            running_loss_1out = 0.
+            running_acc_2out = 0.
+            running_acc_1out = 0.
 
             # Iterate over data.
             for inputs, labels, paths in tqdm(dataloader):
@@ -41,58 +84,115 @@ def train_model(model, train_dataloader, train_dataset, val_dataloader, loss, op
 
                 optimizer.zero_grad()
 
-
                 # forward and backward
                 with torch.set_grad_enabled(phase == 'train'):
-                    u = Tensor()
+                    # u = Tensor()
                     # preds, u1 = model(inputs.cuda(),u)
-                    # preds = model(inputs.cuda())
-                    preds, u = model(inputs)
-                    # print(torch.tensor(preds).shape)
-                    print(preds[0])
-                    # print("11111111111")
-                    # print(u)
+                    preds_2, preds_1 = model(inputs)
+
                     # loss_value = loss(preds[1], labels.cuda())
                     # preds_class = preds[1].argmax(dim=1)
-                    # loss_value = loss(preds, labels.cuda())
-                    loss_value = loss(preds, labels)
-                    preds_class = preds.argmax(dim=1)
+
+                    loss_value_1_out = loss(preds_1, labels)
+                    loss_value_2_out = loss(preds_2, labels)
+                    loss_common = 0 * loss_value_1_out + loss_value_2_out
+
+                    preds_class_1_out = preds_1.argmax(dim=1)
+                    preds_class_2_out = preds_2.argmax(dim=1)
 
                     # backward + optimize only if in training phase
                     if phase == 'train':
-                        loss_value.backward()
+                        # loss_value_2_out.backward()
+                        loss_common.backward()
                         optimizer.step()
-                        train_loss.append(loss_value.item())
+                        # train_loss.append(loss_value_2_out.item())
+                        train_loss.append(loss_common.item())
                         # classific_report=classification_report(labels.data.cuda(), preds_class, target_names=labels.data.cuda())
-                        # running_acc1 += (preds_class == labels.data.cuda()).float().mean()
-                        running_acc1 += (preds_class == labels.data).float().mean()
-                        train_acc.append(running_acc1)
+                        running_acc_train_2out += (preds_class_2_out == labels.data).float().mean()
+                        running_acc_train_1out += (preds_class_1_out == labels.data).float().mean()
+                        train_acc_2out.append(running_acc_train_2out)
+                        train_acc_1out.append(running_acc_train_1out)
+
+                        metrics = {"train/train_loss": train_loss,
+                                   "train/running_acc_train_2out": running_acc_train_2out,
+                                   "train/running_acc_train_1out": running_acc_train_1out,
+                                   "train/train_acc_2out": train_acc_2out,
+                                   "train/train_acc_1out": train_acc_1out,
+                                   "train/epoch": epoch,
+                                   }
+
+                        # wandb.log(metrics)
+
+                    elif phase == 'val':
+
+                        val_loss_2out.append(loss_value_2_out.item())
+                        val_loss_1out.append(loss_value_1_out.item())
+                        running_acc_val_1out += (preds_class_1_out == labels.data).float().mean()
+                        running_acc_val_2out += (preds_class_2_out == labels.data).float().mean()
+                        val_acc_2out.append(running_acc_val_2out)
+                        val_acc_1out.append(running_acc_val_1out)
+
+                        val_metrics = {
+                            "val/val_loss_2out": val_loss_2out,
+                            "val/val_loss_1out": val_loss_1out,
+                            "val/running_acc_val_1out": running_acc_val_1out,
+                            "val/running_acc_val_2out": running_acc_val_2out,
+                            "val/val_acc_2out": val_acc_2out,
+                            "val/val_acc_1out": val_acc_1out,
+                            "val/epoch": epoch,
+                        }
+
+                        # wandb.log(val_metrics)
 
                     else:
+                        test_loss_2out.append(loss_value_2_out.item())
+                        test_loss_1out.append(loss_value_1_out.item())
+                        running_acc_test_1out += (preds_class_1_out == labels.data).float().mean()
+                        running_acc_test_2out += (preds_class_2_out == labels.data).float().mean()
+                        test_acc_2out.append(running_acc_test_2out)
+                        test_acc_1out.append(running_acc_test_1out)
 
-                        val_loss.append(loss_value.item())
-                        # running_acc2 += (preds_class == labels.data.cuda()).float().mean()
-                        running_acc2 += (preds_class == labels.data).float().mean()
-                        val_acc.append(running_acc2)
+                        test_metrics = {
+                            "test/test_loss_2out": test_loss_2out,
+                            "test/test_loss_1out": test_loss_1out,
+                            "test/running_acc_test_1out": running_acc_test_1out,
+                            "test/running_acc_test_2out": running_acc_test_2out,
+                            "test/test_acc_2out": test_acc_2out,
+                            "test/test_acc_1out": test_acc_1out,
+                            "test/epoch": epoch,
+                        }
+
+                        # wandb.log(test_metrics)
 
                 # statistics
-                running_loss += loss_value.item()
+                running_loss_2out += loss_value_2_out.item()
+                running_loss_1out += loss_value_1_out.item()
 
-                # running_acc += (preds_class == labels.data.cuda()).float().mean()
-                running_acc += (preds_class == labels.data).float().mean()
+                running_acc_2out += (preds_class_2_out == labels.data).float().mean()
+                running_acc_1out += (preds_class_1_out == labels.data).float().mean()
 
-            epoch_loss = running_loss / len(dataloader)
-            epoch_acc = running_acc / len(dataloader)
+            epoch_loss_2out = running_loss_2out / len(dataloader)
+            epoch_acc_2out = running_acc_2out / len(dataloader)
 
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc), flush=True)
+            epoch_loss_1out = running_loss_1out / len(dataloader)
+            epoch_acc_1out = running_acc_1out / len(dataloader)
 
-            train_acc_cpu = torch.tensor(train_acc).cpu()
+            # print('{} 2 OUTPUT: Loss: {:.4f} Acc: {:.4f}  1 OUTPUT: Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss_2out, epoch_loss_2out,  epoch_loss_1out, epoch_loss_1out), flush=True)
+            print('{} 2 OUTPUT: Loss: {:.4f} Acc: {:.4f}  1 OUTPUT: Loss: {:.4f} Acc: {:.4f}'.format(phase,
+                                                                                                     epoch_loss_2out,
+                                                                                                     epoch_acc_2out,
+                                                                                                     epoch_loss_1out,
+                                                                                                     epoch_acc_1out),
+                  flush=True)
+
+            train_acc_cpu = torch.tensor(train_acc_2out).cpu()
             # writer.add_scalar('train_accuracy', scalar_value=epoch_acc, global_step=epoch)
 
             if (phase == 'val'):
-                val_acc_cpu = torch.tensor(val_acc).cpu()
-                # writer.add_scalar('val_accuracy', scalar_value=epoch_acc, global_step=epoch)
+                val_acc_cpu = torch.tensor(val_acc_2out).cpu()
+                # writer.add_scalar('val_accuracy', scalar_value=epoch_acc_2out, global_step=epoch)
 
             torch.save(model.state_dict(), path_weigh_save + str(epoch))
-
-    return model, train_loss, val_loss, train_acc, val_acc
+    # wandb.watch(model)
+    # wandb.finish()
+    return model, train_loss, val_loss_2out, train_acc_2out, val_acc_2out, train_acc_1out, val_acc_1out

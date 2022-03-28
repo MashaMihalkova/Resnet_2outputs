@@ -34,20 +34,22 @@ def load_images(_dataset_path, color_or_grey: str, _batch_size=60, _num_workers=
         batch_size=_batch_size,
         shuffle=False,
         num_workers=_num_workers)
-    _dataset = ImageFolderWithPaths(_dataset_path, transform_dict[color_or_grey])
-    _dataloader = torch.utils.data.DataLoader(
-        _dataset,
-        batch_size=_batch_size,
-        shuffle=False,
-        num_workers=_num_workers)
+    # _dataset = ImageFolderWithPaths(_dataset_path, transform_dict[color_or_grey])
+    # _dataloader = torch.utils.data.DataLoader(
+    #     _dataset,
+    #     batch_size=_batch_size,
+    #     shuffle=False,
+    #     num_workers=_num_workers)
 
     return _dataset, _dataloader
 
 
-def create_dataset(train_dir: str, val_dir: str, color_or_grey: str, batch_size: int, num_workers: int):
+
+def create_dataset(train_dir: str, val_dir: str, test_dir: str, color_or_grey: str, batch_size: int, num_workers: int):
     train_dataset = torchvision.datasets.ImageFolder(train_dir, transform_dict[color_or_grey])
     val_dataset = torchvision.datasets.ImageFolder(val_dir, transform_dict[color_or_grey])
 
+    test_dataset = torchvision.datasets.ImageFolder(test_dir, transform_dict[color_or_grey])
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # log_dir = os.path.join('/content/drive/MyDrive/Institute Phy/expriment_withiut_14.07/log/', log_folder)
@@ -59,4 +61,6 @@ def create_dataset(train_dir: str, val_dir: str, color_or_grey: str, batch_size:
         train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     val_dataloader = torch.utils.data.DataLoader(
         val_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    return train_dataloader, val_dataloader
+    test_dataloader = torch.utils.data.DataLoader(
+        test_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    return train_dataloader, val_dataloader, test_dataloader
