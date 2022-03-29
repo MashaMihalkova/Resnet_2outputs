@@ -8,9 +8,9 @@ from torchvision import models
 from typing import Tuple, Optional
 import cv2
 
-class RESNET_2out(nn.Module):
+class RESNET_2out_tensor(nn.Module):
     def __init__(self, layer_number:int = 3, num_classes: int = 1000, color_or_grey: str = "grey") -> None:
-        super(RESNET_2out, self).__init__()
+        super(RESNET_2out_tensor, self).__init__()
         model = models.resnet18(pretrained=True)
         if color_or_grey == 'grey':
             model.conv1 = torch.nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
@@ -106,51 +106,23 @@ class RESNET_2out(nn.Module):
         # all_ind_x_bs = []
         # all_ind_y_bs = []
         y_bs = []
-        print("x_2shape = ",x_2out.shape)
+        print("x_2shape = ", x_2out.shape)
         # print(x.shape)
+        y_bs = []
         for bs in range(x_2out.shape[0]):
-            all_filters = []
-            feature_map_sum = []
-            for i in range(x_2out.shape[1]):
-                filter1 = x_2out[bs, i, :, :]
-                filter1 = filter1[:, :, np.newaxis].detach().numpy()
-                all_filters.append(filter1)
+            bs_x = x_2out[bs]
+            ind = unravel_index(torch.argmax(bs_x), bs_x.shape)
+            x_max = ind[1]
+            y_max = ind[2]
+            a = x_2out[bs, :, x_max, y_max]#.unsqueeze(1)
+            y_bs.append(a)
 
-            np_all_filters = np.array(all_filters)
+            print(ind)
+        y = torch.stack(y_bs)
+        # y = torch.as_tensor(y_bs)
 
-            all_filters_bs.append(np_all_filters)
-            np_all_filters_bs = np.array(all_filters_bs)
-
-            # find index of max element
-            ind = unravel_index(np.argmax(np_all_filters), np_all_filters.shape)
-            ind_x = int(ind[1])
-            # all_ind_x_bs.append(ind_x)
-            ind_y = int(ind[2])
-            # all_ind_y_bs.append(ind_y)
-            # print(np_all_filters[:, ind_x, ind_y, :])
-
-            y = torch.as_tensor(np_all_filters_bs[bs, :, ind_x, ind_y, :])
-            y_bs.append(np_all_filters_bs[bs, :, ind_x, ind_y, :])
-
-            # save feature map
-            # feature_map_sum = sum(ele for ele in all_filters)
-            # feature_map_sum = np.round(feature_map_sum, 0)
-            # # feature_map_sum *= 255
-            # # print(feature_map_sum)
-            # cv2.imwrite("D:\\IF\\project_bacteria_recognition\\split_2021_2022\\{}.png".format(bs), feature_map_sum)
-
-        # y1 = self.avgpool(x)
-        # y1 = torch.flatten(y1, 1)
-        # y1 = self.out1_1(y1)
-
-        y = torch.as_tensor(y_bs)
         y = torch.flatten(y, 1)
-        # y = np.swapaxes(y, 0, 1)
-        # y = self.out1(y)
-        print(y.shape)
-        print(self.out1_1[0].in_features)
         y = self.out1_1(y)
-        print("y shape = ", y.shape)
 
         x = self.avgpool(x4)
         x = torch.flatten(x, 1)

@@ -4,7 +4,7 @@ from torchvision import models, transforms
 
 transform_dict = {
     'grey': transforms.Compose(
-        [transforms.Resize((600, 600)),
+        [transforms.Resize((1024, 1024)),
          transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.2),
          transforms.RandomHorizontalFlip(),
          transforms.ToTensor(),

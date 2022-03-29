@@ -8,6 +8,8 @@ from Resnet_2out import RESNET_2out
 from Create_dataset import *
 from Train import train_model
 from feature_plt import *
+from entropia_output import *
+from ResNet_2output_tensor import *
 import cv2
 from tqdm import tqdm
 
@@ -34,18 +36,24 @@ if __name__ == '__main__':
     PATH_TO_VAL = "D:\\IF\\project_bacteria_recognition\\split_2021_2022\\train_val_sbalans\\val"
     PATH_TO_TEST = "D:\\IF\\project_bacteria_recognition\\split_2021_2022\\test"
 
-    train_dataloader, val_dataloader, test_dataloader = create_dataset(PATH_TO_TRAIN, PATH_TO_VAL, PATH_TO_TEST, "grey",
-                                                                       batch_size, num_workers)
+    # train_dataloader, val_dataloader, test_dataloader = create_dataset(PATH_TO_TRAIN, PATH_TO_VAL, PATH_TO_TEST, "grey",
+    #                                                                    batch_size, num_workers)
 
-    print(train_dataloader.dataset.samples)
+    # print(train_dataloader.dataset.samples)
     train_dataset, train_dataloader = load_images(PATH_TO_TRAIN, 'grey', batch_size, num_workers)
     val_dataset, val_dataloader = load_images(PATH_TO_VAL, 'grey', batch_size, num_workers)
     test_dataset, test_dataloader = load_images(PATH_TO_VAL, 'grey', batch_size, num_workers)
 
 
 
-    model_2out = RESNET_2out(layer_number = 2,num_classes=num_class, color_or_grey=color_or_grey)
+    # model_2out = RESNET_2out(layer_number = 2,num_classes=num_class, color_or_grey=color_or_grey)
+    # model_2out = model_2out.to(device)
+
+    model_2out = RESNET_2out_tensor(layer_number=2, num_classes=num_class, color_or_grey=color_or_grey)
     model_2out = model_2out.to(device)
+
+    # model_entrop = Entropia_2output(layer_number=2, num_classes=num_class, color_or_grey=color_or_grey)
+    # model_2out = model_entrop.to(device)
 
     if loss == 'CE':
         loss = torch.nn.CrossEntropyLoss()

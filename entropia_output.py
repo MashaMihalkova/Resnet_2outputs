@@ -6,11 +6,12 @@ from numpy import unravel_index
 from torch import Tensor
 from torchvision import models
 from typing import Tuple, Optional
+from math import log, e
 import cv2
 
-class RESNET_2out(nn.Module):
+class Entropia_2output(nn.Module):
     def __init__(self, layer_number:int = 3, num_classes: int = 1000, color_or_grey: str = "grey") -> None:
-        super(RESNET_2out, self).__init__()
+        super(Entropia_2output, self).__init__()
         model = models.resnet18(pretrained=True)
         if color_or_grey == 'grey':
             model.conv1 = torch.nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
@@ -111,46 +112,59 @@ class RESNET_2out(nn.Module):
         for bs in range(x_2out.shape[0]):
             all_filters = []
             feature_map_sum = []
-            for i in range(x_2out.shape[1]):
-                filter1 = x_2out[bs, i, :, :]
-                filter1 = filter1[:, :, np.newaxis].detach().numpy()
-                all_filters.append(filter1)
+            for i in range(x_2out.shape[2]):
+                for j in range(x_2out.shape[2]):
+                    filter1 = x_2out[bs, :, i, j]
+                    filter1 = filter1[:, np.newaxis].detach().numpy()
+
+                # y_bs.append(np_all_filters_bs[bs, :, ind_x, ind_y, :])
+                    all_filters.append(filter1)
 
             np_all_filters = np.array(all_filters)
-
+            #
             all_filters_bs.append(np_all_filters)
             np_all_filters_bs = np.array(all_filters_bs)
+            y = torch.as_tensor(np_all_filters_bs[bs, :, :, :])
+            y_bs.append(np_all_filters_bs[bs, :, :, :])
 
-            # find index of max element
-            ind = unravel_index(np.argmax(np_all_filters), np_all_filters.shape)
-            ind_x = int(ind[1])
-            # all_ind_x_bs.append(ind_x)
-            ind_y = int(ind[2])
-            # all_ind_y_bs.append(ind_y)
-            # print(np_all_filters[:, ind_x, ind_y, :])
+            # #find index of max element
+            # ind = unravel_index(np.argmax(np_all_filters), np_all_filters.shape)
+            # ind_x = int(ind[1])
+            # # all_ind_x_bs.append(ind_x)
+            # ind_y = int(ind[2])
+            # # all_ind_y_bs.append(ind_y)
+            # # print(np_all_filters[:, ind_x, ind_y, :])
 
-            y = torch.as_tensor(np_all_filters_bs[bs, :, ind_x, ind_y, :])
-            y_bs.append(np_all_filters_bs[bs, :, ind_x, ind_y, :])
 
-            # save feature map
+
+            # #save feature map
             # feature_map_sum = sum(ele for ele in all_filters)
             # feature_map_sum = np.round(feature_map_sum, 0)
             # # feature_map_sum *= 255
             # # print(feature_map_sum)
             # cv2.imwrite("D:\\IF\\project_bacteria_recognition\\split_2021_2022\\{}.png".format(bs), feature_map_sum)
+        y_bs = np.array(y_bs)
+        y_bs = np.swapaxes(y_bs, 1, 2)
+        y1 = torch.as_tensor(y_bs)
+        for i in range(y_bs.shape[2]):
+            # y1 = torch.as_tensor(y_bs[:, i, :, :])
+            y = torch.flatten(y1[:, :, i, :], 1)
+            y_ = self.out1_1(y)
+            print(y_.shape)
+            entr = self.entropy2(y_.detach().numpy())
+
 
         # y1 = self.avgpool(x)
         # y1 = torch.flatten(y1, 1)
         # y1 = self.out1_1(y1)
-
-        y = torch.as_tensor(y_bs)
-        y = torch.flatten(y, 1)
-        # y = np.swapaxes(y, 0, 1)
-        # y = self.out1(y)
-        print(y.shape)
-        print(self.out1_1[0].in_features)
-        y = self.out1_1(y)
-        print("y shape = ", y.shape)
+        # y_ = torch.as_tensor(y_bs)
+        # for bs in range(x_2out.shape[0]):
+        #     for i in range(x_2out.shape[1]):
+        #
+        #         print(y.shape)
+        #         # print(self.out1_1[0].in_features)
+        #         y = self.out1_1(y)
+        #         print("y shape = ", y.shape)
 
         x = self.avgpool(x4)
         x = torch.flatten(x, 1)
@@ -166,3 +180,26 @@ class RESNET_2out(nn.Module):
         # def forward(self, x: Tensor) -> Tensor:
     #       return self._forward_impl(x)
 
+    def entropy2(self, labels, base=None):
+        """ Computes entropy of label distribution. """
+
+        n_labels = len(labels)
+
+        if n_labels <= 1:
+            return 0
+
+        value, counts = np.unique(labels, return_counts=True)
+        probs = counts / n_labels
+        n_classes = np.count_nonzero(probs)
+
+        if n_classes <= 1:
+            return 0
+
+        ent = 0.
+
+        # Compute entropy
+        base = e if base is None else base
+        for i in probs:
+            ent -= i * log(i, base)
+
+        return ent
