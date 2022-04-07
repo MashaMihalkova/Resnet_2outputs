@@ -10,6 +10,7 @@ from Train import train_model
 from feature_plt import *
 from entropia_output import *
 from ResNet_2output_tensor import *
+from entropia_2version_softmax_p_H import *
 import cv2
 from tqdm import tqdm
 
@@ -51,9 +52,16 @@ if __name__ == '__main__':
 
     # model_2out = RESNET_2out_tensor(layer_number=4, num_classes=num_class, color_or_grey=color_or_grey)
     # model_2out = model_2out.to(device)
+    # model_name = RESNET_2out_tensor
 
-    model_entrop = Entropia_2output(layer_number=2, num_classes=num_class, color_or_grey=color_or_grey)
+    # model_entrop = Entropia_2output(layer_number=2, num_classes=num_class, color_or_grey=color_or_grey)
+    # model_2out = model_entrop.to(device)
+    # model_name = Entropia_2output
+
+
+    model_entrop = Entropia_2output_2version(layer_number=2, num_classes=num_class, color_or_grey=color_or_grey)
     model_2out = model_entrop.to(device)
+    model_name = Entropia_2output
 
     if loss == 'CE':
         loss = torch.nn.CrossEntropyLoss()
@@ -80,7 +88,7 @@ if __name__ == '__main__':
     modell, train_loss, val_loss, train_acc, val_acc = train_model(model_2out, train_dataloader, test_dataloader,
                                                                    val_dataloader, loss,
                                                                    optimizer, scheduler, num_epoch,
-                                                                   PATH_TO_SAVE_WEIGHTS)
+                                                                   PATH_TO_SAVE_WEIGHTS, model_name=model_name)
     # input_image = cv2.imread(
     #     "D:\\IF\\project_bacteria_recognition\\split_2021_2022\\test\\Acinetobacter baumannii\\1.jpeg")
 
