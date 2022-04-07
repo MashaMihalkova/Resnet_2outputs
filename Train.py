@@ -89,15 +89,23 @@ def train_model(model, train_dataloader, test_dataloader, val_dataloader, loss, 
                     # u = Tensor()
                     # preds, u1 = model(inputs.cuda(),u)
                     preds_2, preds_1 = model(inputs)
+                    print(preds_1.shape)
 
                     # loss_value = loss(preds[1], labels.cuda())
                     # preds_class = preds[1].argmax(dim=1)
+                    all_loss_value_1_out = []
+                    for i in (range(preds_1.shape[1])):
+                        pred_1 = preds_1[:, i, :]
 
-                    loss_value_1_out = loss(preds_1, labels)
+                        all_loss_value_1_out.append(loss(pred_1, labels))
+                    loss_value_1_out = min(all_loss_value_1_out)
+                    all_loss_value_1_out = torch.stack(all_loss_value_1_out)
+
+                    arg_loss_value_1_out = all_loss_value_1_out.argmin(dim=0)
                     loss_value_2_out = loss(preds_2, labels)
                     loss_common = 0 * loss_value_1_out + loss_value_2_out
-
-                    preds_class_1_out = preds_1.argmax(dim=1)
+                    # p = preds_1[:,arg_loss_value_1_out,:]
+                    preds_class_1_out = preds_1[:, arg_loss_value_1_out, :].argmax(dim=1)
                     preds_class_2_out = preds_2.argmax(dim=1)
 
                     # backward + optimize only if in training phase

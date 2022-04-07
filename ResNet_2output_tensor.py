@@ -37,12 +37,12 @@ class RESNET_2out_tensor(nn.Module):
             nn.Dropout(0.4),
             nn.Linear(256, num_classes),
             nn.LogSoftmax(dim=1))
-        self.size_l = 128
+        self.size_l = 512
         self.out1_1 = nn.Sequential(
-            nn.Linear(self.size_l, 256),
+            nn.Linear(self.size_l, 1024), #256
             nn.ReLU(),
             nn.Dropout(0.4),
-            nn.Linear(256, num_classes),
+            nn.Linear(1024, num_classes),
             nn.LogSoftmax(dim=1))
         # self.y = Tensor
         self.layer3 = model1[6]
@@ -121,7 +121,7 @@ class RESNET_2out_tensor(nn.Module):
         y = torch.stack(y_bs)
         # y = torch.as_tensor(y_bs)
 
-        y = torch.flatten(y, 1)
+        # y = torch.flatten(y, 1)
         y = self.out1_1(y)
 
         x = self.avgpool(x4)

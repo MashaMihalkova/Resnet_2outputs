@@ -49,11 +49,11 @@ if __name__ == '__main__':
     # model_2out = RESNET_2out(layer_number = 2,num_classes=num_class, color_or_grey=color_or_grey)
     # model_2out = model_2out.to(device)
 
-    model_2out = RESNET_2out_tensor(layer_number=2, num_classes=num_class, color_or_grey=color_or_grey)
-    model_2out = model_2out.to(device)
+    # model_2out = RESNET_2out_tensor(layer_number=4, num_classes=num_class, color_or_grey=color_or_grey)
+    # model_2out = model_2out.to(device)
 
-    # model_entrop = Entropia_2output(layer_number=2, num_classes=num_class, color_or_grey=color_or_grey)
-    # model_2out = model_entrop.to(device)
+    model_entrop = Entropia_2output(layer_number=2, num_classes=num_class, color_or_grey=color_or_grey)
+    model_2out = model_entrop.to(device)
 
     if loss == 'CE':
         loss = torch.nn.CrossEntropyLoss()

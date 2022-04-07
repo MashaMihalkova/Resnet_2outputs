@@ -4,6 +4,7 @@ import torch
 import torchvision.models
 from numpy import unravel_index
 from torch import Tensor
+import torch.nn.functional as F
 from torchvision import models
 from typing import Tuple, Optional
 from math import log, e
@@ -57,6 +58,7 @@ class Entropia_2output(nn.Module):
     def _forward_impl(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         # See note [TorchScript super()]
 
+        global a_bs
         size_l = self.layer1[0].conv1.in_channels
 
         print(size_l)
@@ -87,16 +89,24 @@ class Entropia_2output(nn.Module):
         print("OUT = ",self.layer3[0].conv1.out_channels)
         if self.layer_number == 1:
             x_2out = x1
-            self.out1_1[0].in_features = self.layer1[0].conv1.out_channels#in_channels
+            self.size_l = self.layer1[0].conv1.out_channels
+            self.out1_1[0] = nn.Linear(self.layer1[0].conv1.out_channels, 256)
+                # .in_features = self.layer1[0].conv1.out_channels#in_channels
         elif self.layer_number == 2:
 
             x_2out = x2
+            self.size_l = self.layer2[0].conv1.out_channels
+            self.out1_1[0] = nn.Linear(self.layer2[0].conv1.out_channels, 256)
             self.out1_1[0].in_features = self.layer2[0].conv1.out_channels#in_channels
         elif self.layer_number == 3:
             x_2out = x3
+            self.size_l = self.layer3[0].conv1.out_channels
+            self.out1_1[0] = nn.Linear(self.layer3[0].conv1.out_channels, 512)
             self.out1_1[0].in_features = self.layer3[0].conv1.out_channels#in_channels
         elif self.layer_number == 4:
             x_2out = x4
+            self.out1_1[0] = nn.Linear(self.layer4[0].conv1.out_channels, 1024)
+            self.size_l = self.layer3[0].conv1.out_channels
             self.out1_1[0].in_features = self.layer4[0].conv1.out_channels#in_channels
 
         y = Tensor()
@@ -107,51 +117,35 @@ class Entropia_2output(nn.Module):
         # all_ind_x_bs = []
         # all_ind_y_bs = []
         y_bs = []
-        print("x_2shape = ",x_2out.shape)
-        # print(x.shape)
+
         for bs in range(x_2out.shape[0]):
-            all_filters = []
-            feature_map_sum = []
+            bs_x = x_2out[bs]
+            a_bs = []
             for i in range(x_2out.shape[2]):
-                for j in range(x_2out.shape[2]):
-                    filter1 = x_2out[bs, :, i, j]
-                    filter1 = filter1[:, np.newaxis].detach().numpy()
+                for j in range(x_2out.shape[3]):
+                    a = x_2out[bs, :, i, j]#.unsqueeze(1)
 
-                # y_bs.append(np_all_filters_bs[bs, :, ind_x, ind_y, :])
-                    all_filters.append(filter1)
+                    a_bs.append(a)
 
-            np_all_filters = np.array(all_filters)
-            #
-            all_filters_bs.append(np_all_filters)
-            np_all_filters_bs = np.array(all_filters_bs)
-            y = torch.as_tensor(np_all_filters_bs[bs, :, :, :])
-            y_bs.append(np_all_filters_bs[bs, :, :, :])
-
-            # #find index of max element
-            # ind = unravel_index(np.argmax(np_all_filters), np_all_filters.shape)
-            # ind_x = int(ind[1])
-            # # all_ind_x_bs.append(ind_x)
-            # ind_y = int(ind[2])
-            # # all_ind_y_bs.append(ind_y)
-            # # print(np_all_filters[:, ind_x, ind_y, :])
-
-
-
-            # #save feature map
-            # feature_map_sum = sum(ele for ele in all_filters)
-            # feature_map_sum = np.round(feature_map_sum, 0)
-            # # feature_map_sum *= 255
-            # # print(feature_map_sum)
-            # cv2.imwrite("D:\\IF\\project_bacteria_recognition\\split_2021_2022\\{}.png".format(bs), feature_map_sum)
-        y_bs = np.array(y_bs)
-        y_bs = np.swapaxes(y_bs, 1, 2)
-        y1 = torch.as_tensor(y_bs)
-        for i in range(y_bs.shape[2]):
-            # y1 = torch.as_tensor(y_bs[:, i, :, :])
-            y = torch.flatten(y1[:, :, i, :], 1)
-            y_ = self.out1_1(y)
-            print(y_.shape)
-            entr = self.entropy2(y_.detach().numpy())
+            y_bs_ = torch.stack(a_bs)
+            y_bs.append(y_bs_)
+            # y_bs.append(a_bs)# torch.stack(a_bs)
+            # y_bs.append(a_bs)
+        y = torch.stack(y_bs)
+        # y = y_bs
+            # print(ind)
+        # y = torch.stack(y_bs)
+        # y_bs = np.array(y_bs)
+        # y_bs = np.swapaxes(y_bs, 1, 2)
+        # y1 = torch.as_tensor(y_bs)
+        # for i in range(y.shape[0]):
+        #     # y1 = torch.as_tensor(y_bs[:, i, :, :])
+        #     y_ = torch.flatten(y[i, :, :], 1)
+        #     y_ = self.out1_1(y_)
+        #     print(y_.shape)
+        y = self.out1_1(y)
+            # loss = F.cross_entropy(input, target)
+            # entr = self.entropy2(y_.detach().numpy())
 
 
         # y1 = self.avgpool(x)
