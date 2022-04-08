@@ -8,9 +8,9 @@ from torchvision import models
 from typing import Tuple, Optional
 import cv2
 
-class RESNET_2out_tensor(nn.Module):
+class RESNET_2out_tensor_1layer(nn.Module):
     def __init__(self, layer_number:int = 3, num_classes: int = 1000, color_or_grey: str = "grey") -> None:
-        super(RESNET_2out_tensor, self).__init__()
+        super(RESNET_2out_tensor_1layer, self).__init__()
         model = models.resnet18(pretrained=True)
         if color_or_grey == 'grey':
             model.conv1 = torch.nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)

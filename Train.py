@@ -86,120 +86,126 @@ def train_model(model, train_dataloader, test_dataloader, val_dataloader, loss, 
 
                 # forward and backward
                 with torch.set_grad_enabled(phase == 'train'):
-                    # u = Tensor()
-                    # preds, u1 = model(inputs.cuda(),u)
-                    preds_2, preds_1 = model(inputs)
-                    print(preds_1.shape)
-                    if model_name == 'Entropia_2output':
-                        all_loss_value_1_out = []
-                        for i in (range(preds_1.shape[1])):
-                            pred_1 = preds_1[:, i, :]
-                            all_loss_value_1_out.append(loss(pred_1, labels))
-                        loss_value_1_out = min(all_loss_value_1_out)
-                        all_loss_value_1_out = torch.stack(all_loss_value_1_out)
-                        arg_loss_value_1_out = all_loss_value_1_out.argmin(dim=0)
-                        preds_class_1_out = preds_1[:, arg_loss_value_1_out, :].argmax(dim=1)
-                    else:
-                        loss_value_1_out = loss(preds_1, labels)
-                        preds_class_1_out = preds_1.argmax(dim=1)
+                    with torch.autograd.set_detect_anomaly(True):
+                        # u = Tensor()
+                        # preds, u1 = model(inputs.cuda(),u)
+                        preds_2, preds_1 = model(inputs)
+                        print(preds_1.shape)
+                        if model_name == 'Entropia_2output':
+                            all_loss_value_1_out = []
+                            for i in (range(preds_1.shape[1])):
+                                pred_1 = preds_1[:, i, :]
+                                all_loss_value_1_out.append(loss(pred_1, labels))
+                            loss_value_1_out = min(all_loss_value_1_out)
+                            all_loss_value_1_out = torch.stack(all_loss_value_1_out)
+                            arg_loss_value_1_out = all_loss_value_1_out.argmin(dim=0)
+                            preds_class_1_out = preds_1[:, arg_loss_value_1_out, :].argmax(dim=1)
+                        elif model_name == 'Entropia_2output_2':
+                            loss_value_1_out = loss(preds_1, labels)
+                            preds_class_1_out = preds_1.argmax(dim=1)
+                        else:
 
-                    loss_value_2_out = loss(preds_2, labels)
-                    loss_common = 0 * loss_value_1_out + loss_value_2_out
-                    preds_class_2_out = preds_2.argmax(dim=1)
+                            loss_value_1_out = loss(pred_1, labels)
+                            preds_class_1_out = preds_1.argmax(dim=1)
 
-                    # backward + optimize only if in training phase
-                    if phase == 'train':
-                        # loss_value_2_out.backward()
-                        loss_common.backward()
-                        optimizer.step()
-                        # train_loss.append(loss_value_2_out.item())
-                        train_loss.append(loss_common.item())
-                        # classific_report=classification_report(labels.data.cuda(), preds_class, target_names=labels.data.cuda())
-                        running_acc_train_2out += (preds_class_2_out == labels.data).float().mean()
-                        running_acc_train_1out += (preds_class_1_out == labels.data).float().mean()
-                        train_acc_2out.append(running_acc_train_2out)
-                        train_acc_1out.append(running_acc_train_1out)
+                        loss_value_2_out = loss(preds_2, labels)
+                        loss_common = 0 * loss_value_1_out + loss_value_2_out
+                        preds_class_2_out = preds_2.argmax(dim=1)
 
-                        metrics = {"train/train_loss": train_loss,
-                                   "train/running_acc_train_2out": running_acc_train_2out,
-                                   "train/running_acc_train_1out": running_acc_train_1out,
-                                   "train/train_acc_2out": train_acc_2out,
-                                   "train/train_acc_1out": train_acc_1out,
-                                   "train/epoch": epoch,
-                                   }
+                        # backward + optimize only if in training phase
+                        if phase == 'train':
+                            # loss_value_2_out.backward()
+                            # autograd.set_detect_anomaly(True)
+                            loss_common.backward()
+                            optimizer.step()
+                            # train_loss.append(loss_value_2_out.item())
+                            train_loss.append(loss_common.item())
+                            # classific_report=classification_report(labels.data.cuda(), preds_class, target_names=labels.data.cuda())
+                            running_acc_train_2out += (preds_class_2_out == labels.data).float().mean()
+                            running_acc_train_1out += (preds_class_1_out == labels.data).float().mean()
+                            train_acc_2out.append(running_acc_train_2out)
+                            train_acc_1out.append(running_acc_train_1out)
 
-                        # wandb.log(metrics)
+                            metrics = {"train/train_loss": train_loss,
+                                       "train/running_acc_train_2out": running_acc_train_2out,
+                                       "train/running_acc_train_1out": running_acc_train_1out,
+                                       "train/train_acc_2out": train_acc_2out,
+                                       "train/train_acc_1out": train_acc_1out,
+                                       "train/epoch": epoch,
+                                       }
 
-                    elif phase == 'val':
+                            # wandb.log(metrics)
 
-                        val_loss_2out.append(loss_value_2_out.item())
-                        val_loss_1out.append(loss_value_1_out.item())
-                        running_acc_val_1out += (preds_class_1_out == labels.data).float().mean()
-                        running_acc_val_2out += (preds_class_2_out == labels.data).float().mean()
-                        val_acc_2out.append(running_acc_val_2out)
-                        val_acc_1out.append(running_acc_val_1out)
+                        elif phase == 'val':
 
-                        val_metrics = {
-                            "val/val_loss_2out": val_loss_2out,
-                            "val/val_loss_1out": val_loss_1out,
-                            "val/running_acc_val_1out": running_acc_val_1out,
-                            "val/running_acc_val_2out": running_acc_val_2out,
-                            "val/val_acc_2out": val_acc_2out,
-                            "val/val_acc_1out": val_acc_1out,
-                            "val/epoch": epoch,
-                        }
+                            val_loss_2out.append(loss_value_2_out.item())
+                            val_loss_1out.append(loss_value_1_out.item())
+                            running_acc_val_1out += (preds_class_1_out == labels.data).float().mean()
+                            running_acc_val_2out += (preds_class_2_out == labels.data).float().mean()
+                            val_acc_2out.append(running_acc_val_2out)
+                            val_acc_1out.append(running_acc_val_1out)
 
-                        # wandb.log(val_metrics)
+                            val_metrics = {
+                                "val/val_loss_2out": val_loss_2out,
+                                "val/val_loss_1out": val_loss_1out,
+                                "val/running_acc_val_1out": running_acc_val_1out,
+                                "val/running_acc_val_2out": running_acc_val_2out,
+                                "val/val_acc_2out": val_acc_2out,
+                                "val/val_acc_1out": val_acc_1out,
+                                "val/epoch": epoch,
+                            }
 
-                    else:
-                        test_loss_2out.append(loss_value_2_out.item())
-                        test_loss_1out.append(loss_value_1_out.item())
-                        running_acc_test_1out += (preds_class_1_out == labels.data).float().mean()
-                        running_acc_test_2out += (preds_class_2_out == labels.data).float().mean()
-                        test_acc_2out.append(running_acc_test_2out)
-                        test_acc_1out.append(running_acc_test_1out)
+                            # wandb.log(val_metrics)
 
-                        test_metrics = {
-                            "test/test_loss_2out": test_loss_2out,
-                            "test/test_loss_1out": test_loss_1out,
-                            "test/running_acc_test_1out": running_acc_test_1out,
-                            "test/running_acc_test_2out": running_acc_test_2out,
-                            "test/test_acc_2out": test_acc_2out,
-                            "test/test_acc_1out": test_acc_1out,
-                            "test/epoch": epoch,
-                        }
+                        else:
+                            test_loss_2out.append(loss_value_2_out.item())
+                            test_loss_1out.append(loss_value_1_out.item())
+                            running_acc_test_1out += (preds_class_1_out == labels.data).float().mean()
+                            running_acc_test_2out += (preds_class_2_out == labels.data).float().mean()
+                            test_acc_2out.append(running_acc_test_2out)
+                            test_acc_1out.append(running_acc_test_1out)
 
-                        # wandb.log(test_metrics)
+                            test_metrics = {
+                                "test/test_loss_2out": test_loss_2out,
+                                "test/test_loss_1out": test_loss_1out,
+                                "test/running_acc_test_1out": running_acc_test_1out,
+                                "test/running_acc_test_2out": running_acc_test_2out,
+                                "test/test_acc_2out": test_acc_2out,
+                                "test/test_acc_1out": test_acc_1out,
+                                "test/epoch": epoch,
+                            }
 
-                # statistics
-                running_loss_2out += loss_value_2_out.item()
-                running_loss_1out += loss_value_1_out.item()
+                            # wandb.log(test_metrics)
 
-                running_acc_2out += (preds_class_2_out == labels.data).float().mean()
-                running_acc_1out += (preds_class_1_out == labels.data).float().mean()
+                    # statistics
+                    running_loss_2out += loss_value_2_out.item()
+                    running_loss_1out += loss_value_1_out.item()
 
-            epoch_loss_2out = running_loss_2out / len(dataloader)
-            epoch_acc_2out = running_acc_2out / len(dataloader)
+                    running_acc_2out += (preds_class_2_out == labels.data).float().mean()
+                    running_acc_1out += (preds_class_1_out == labels.data).float().mean()
 
-            epoch_loss_1out = running_loss_1out / len(dataloader)
-            epoch_acc_1out = running_acc_1out / len(dataloader)
+                epoch_loss_2out = running_loss_2out / len(dataloader)
+                epoch_acc_2out = running_acc_2out / len(dataloader)
 
-            # print('{} 2 OUTPUT: Loss: {:.4f} Acc: {:.4f}  1 OUTPUT: Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss_2out, epoch_loss_2out,  epoch_loss_1out, epoch_loss_1out), flush=True)
-            print('{} 2 OUTPUT: Loss: {:.4f} Acc: {:.4f}  1 OUTPUT: Loss: {:.4f} Acc: {:.4f}'.format(phase,
-                                                                                                     epoch_loss_2out,
-                                                                                                     epoch_acc_2out,
-                                                                                                     epoch_loss_1out,
-                                                                                                     epoch_acc_1out),
-                  flush=True)
+                epoch_loss_1out = running_loss_1out / len(dataloader)
+                epoch_acc_1out = running_acc_1out / len(dataloader)
 
-            train_acc_cpu = torch.tensor(train_acc_2out).cpu()
-            # writer.add_scalar('train_accuracy', scalar_value=epoch_acc, global_step=epoch)
+                # print('{} 2 OUTPUT: Loss: {:.4f} Acc: {:.4f}  1 OUTPUT: Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss_2out, epoch_loss_2out,  epoch_loss_1out, epoch_loss_1out), flush=True)
+                print('{} 2 OUTPUT: Loss: {:.4f} Acc: {:.4f}  1 OUTPUT: Loss: {:.4f} Acc: {:.4f}'.format(phase,
+                                                                                                         epoch_loss_2out,
+                                                                                                         epoch_acc_2out,
+                                                                                                         epoch_loss_1out,
+                                                                                                         epoch_acc_1out),
+                      flush=True)
 
-            if (phase == 'val'):
-                val_acc_cpu = torch.tensor(val_acc_2out).cpu()
-                # writer.add_scalar('val_accuracy', scalar_value=epoch_acc_2out, global_step=epoch)
+                train_acc_cpu = torch.tensor(train_acc_2out).cpu()
+                # writer.add_scalar('train_accuracy', scalar_value=epoch_acc, global_step=epoch)
 
-            torch.save(model.state_dict(), path_weigh_save + str(epoch))
+                if (phase == 'val'):
+                    val_acc_cpu = torch.tensor(val_acc_2out).cpu()
+                    # writer.add_scalar('val_accuracy', scalar_value=epoch_acc_2out, global_step=epoch)
+
+                torch.save(model.state_dict(), path_weigh_save + str(epoch))
     # wandb.watch(model)
     # wandb.finish()
     return model, train_loss, val_loss_2out, train_acc_2out, val_acc_2out, train_acc_1out, val_acc_1out

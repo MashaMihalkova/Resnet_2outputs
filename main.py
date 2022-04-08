@@ -11,6 +11,7 @@ from feature_plt import *
 from entropia_output import *
 from ResNet_2output_tensor import *
 from entropia_2version_softmax_p_H import *
+from ResNet_2output_1layer_withoutdropout import *
 import cv2
 from tqdm import tqdm
 
@@ -54,14 +55,18 @@ if __name__ == '__main__':
     # model_2out = model_2out.to(device)
     # model_name = RESNET_2out_tensor
 
+    # model_2out = RESNET_2out_tensor_1layer(layer_number=4, num_classes=num_class, color_or_grey=color_or_grey)
+    # model_2out = model_2out.to(device)
+    # model_name = RESNET_2out_tensor_1layer
+
     # model_entrop = Entropia_2output(layer_number=2, num_classes=num_class, color_or_grey=color_or_grey)
     # model_2out = model_entrop.to(device)
-    # model_name = Entropia_2output
+    # model_name = 'Entropia_2output'
 
 
     model_entrop = Entropia_2output_2version(layer_number=2, num_classes=num_class, color_or_grey=color_or_grey)
     model_2out = model_entrop.to(device)
-    model_name = Entropia_2output
+    model_name = 'Entropia_2output_2'
 
     if loss == 'CE':
         loss = torch.nn.CrossEntropyLoss()
