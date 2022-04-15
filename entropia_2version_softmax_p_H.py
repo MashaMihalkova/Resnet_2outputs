@@ -101,24 +101,25 @@ class Entropia_2output_2version(nn.Module):
         #             a_bs.append(a)
         #     y_bs_ = torch.stack(a_bs)
         #     y_bs.append(y_bs_)
-
+        # y1 = torch.stack(y_bs)
         y = torch.reshape(x_2out, (x_2out.shape[0], x_2out.shape[1], x_2out.shape[2]*x_2out.shape[3]))
         # print('y_shape = ', y.shape)
         y = y.swapaxes(2, 1)
-        # y = torch.stack(y_bs)
+
         print('y_shape = ', y.shape)
         y = self.linear_softmax(y)
 
-        koef = y.shape[2] * 0.001 + 1
-        probs_1_clone = y.clone()
-        for bs in range(y.shape[0]):
-            for p_i in range(y.shape[2]):
-                probs_1_clone[bs][:, p_i] = probs_1_clone[bs][:, p_i] + 0.001
-                probs_1_clone[bs][:, p_i] = probs_1_clone[bs][:, p_i] / koef
-        H = torch.stack([(probs_1_clone[bs][:, :] * probs_1_clone[bs][:, :].log()).sum(dim=1) for bs in
-                         range(probs_1_clone.shape[0])])
-        H_min = torch.argmin(H, dim=1)
-        y_out = torch.stack([probs_1_clone[bs][H_min[bs]] for bs in range(probs_1_clone.shape[0])])
+        # koef = y.shape[2] * 0.001 + 1
+        y_clone = y.clone() # проверить рекв град
+        # for bs in range(y.shape[0]):
+        #     for p_i in range(y.shape[2]):
+        #         y_clone[bs][:, p_i] = y_clone[bs][:, p_i] + 0.001
+        #         y_clone[bs][:, p_i] = y_clone[bs][:, p_i] / koef
+        # H = torch.stack([(y_clone[bs][:, :] * y_clone[bs][:, :].log()).sum(dim=1) for bs in
+        #                  range(y_clone.shape[0])])
+        # H_min = torch.argmin(H, dim=1)
+        H_min = [0,0]
+        y_out = torch.stack([y_clone[bs][H_min[bs]] for bs in range(y_clone.shape[0])])
 
         # y = self.fc(y)
         # SOFTMAX

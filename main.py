@@ -14,7 +14,7 @@ from entropia_2version_softmax_p_H import *
 from ResNet_2output_1layer_withoutdropout import *
 import cv2
 from tqdm import tqdm
-
+from mobilenet import *
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -68,8 +68,13 @@ if __name__ == '__main__':
     model_2out = model_entrop.to(device)
     model_name = 'Entropia_2output_2'
 
+    # model_mobilenet = Mobilenet(num_classes=num_class, color_or_grey=color_or_grey)
+    # model_2out = model_mobilenet.to(device)
+    # model_name = 'Mobilenet'
+
     if loss == 'CE':
         loss = torch.nn.CrossEntropyLoss()
+        loss_ls = torch.nn.CrossEntropyLoss(label_smoothing=0.5)
     else:
         loss = torch.nn.BCELoss()
     if optimizer == 'Adam':
@@ -91,7 +96,7 @@ if __name__ == '__main__':
 
 
     modell, train_loss, val_loss, train_acc, val_acc = train_model(model_2out, train_dataloader, test_dataloader,
-                                                                   val_dataloader, loss,
+                                                                   val_dataloader, loss, loss_ls,
                                                                    optimizer, scheduler, num_epoch,
                                                                    PATH_TO_SAVE_WEIGHTS, model_name=model_name)
     # input_image = cv2.imread(

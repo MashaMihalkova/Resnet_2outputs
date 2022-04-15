@@ -26,7 +26,8 @@ def plot_train_history(train, val, type: str, test):
 # Path_test = ''  # "D:\\IF\\graphiks\\exp_Lera_2_test.txt"
 # Path = "D:\\IF\\graphiks\\ResNet_2out_MaxPooling_after4_sum0.3_input-size_1024.txt"
 # Path = "D:\\IF\\graphiks\\MaxPooling_After3Layer_summ0.3.txt"
-Path = "D:\\IF\\graphiks\\REPLAY_seed5_ResNet_input-size_1024.txt"
+# Path = "D:\\IF\\graphiks\\REPLAY_seed5_ResNet_input-size_1024.txt"
+Path = "D:\\IF\\graphiks\\mobilenet\\seed12_mobilenet_weight_decay5_input-size_1024.txt"
 if "exp_Lera" in Path:
     Path_test = Path[:-4]+"_test.txt"
     flag_resnet_2output = 0

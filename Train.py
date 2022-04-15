@@ -12,7 +12,7 @@ predictions = []
 
 # Функция обучения сети
 # def train_model(model, loss, optimizer, scheduler, num_epochs, path_weigh_save):
-def train_model(model, train_dataloader, test_dataloader, val_dataloader, loss, optimizer, scheduler, num_epochs,
+def train_model(model, train_dataloader, test_dataloader, val_dataloader, loss, loss_ls, optimizer, scheduler, num_epochs,
                     path_weigh_save, model_name:str):
 
     '''
@@ -102,6 +102,8 @@ def train_model(model, train_dataloader, test_dataloader, val_dataloader, loss, 
                             preds_class_1_out = preds_1[:, arg_loss_value_1_out, :].argmax(dim=1)
                         elif model_name == 'Entropia_2output_2':
                             loss_value_1_out = loss(preds_1, labels)
+                            loss_value_1_out_ls = loss_ls(preds_1, labels)
+
                             preds_class_1_out = preds_1.argmax(dim=1)
                         else:
 
