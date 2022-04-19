@@ -17,9 +17,9 @@ from tqdm import tqdm
 from mobilenet import *
 
 # Press the green button in the gutter to run the script.
-if __name__ == '__main__':
 
     # путь до данных
+def main():
     PATH_TO_SAVE_WEIGHTS = 'D:\\IF\\project_bacteria_recognition\\split_2021_2022\\'
 
     MODEL = 'ResNet'
@@ -104,3 +104,6 @@ if __name__ == '__main__':
 
     # visualize_feature_map(model_2out(input_image))
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+# if __name__ == '__main__':
+#     main()
