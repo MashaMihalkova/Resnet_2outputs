@@ -92,7 +92,8 @@ class My_model(nn.Module):
         x2 = self.layer2(x1)
         x3 = self.layer3(x2)
         x4 = self.layer4(x3)
-        return x
+        x4 = self.avgpool(x4)
+        return x4
 
     def extr_featueres(self, x: Tensor) -> Tensor:
         x1 = self._forward_impl(x)
@@ -116,30 +117,32 @@ if __name__ == '__main__':
                 labels_all.append(labels)
         # print(features_all)
         features_all_tensor = torch.stack(features_all)
-        features_all_tensor = features_all_tensor.reshape((92, 64, 256, 256)).detach().cpu().numpy()
+        features_all_tensor = features_all_tensor.reshape((features_all_tensor.shape[0]*features_all_tensor.shape[1], 512)).detach().cpu().numpy()
         labels_tensor = torch.stack(labels_all)
         labels_tensor = labels_tensor.reshape((labels_tensor.shape[0]*labels_tensor.shape[1]))
 
-        nsamples, nx, ny, nz = features_all_tensor.shape
-        X = features_all_tensor.reshape((nsamples, nx * ny * nz))
+        # nsamples, nx, ny, nz = features_all_tensor.shape
+        # X = features_all_tensor.reshape((nsamples, nx * ny * nz))
+        nsamples, nx = features_all_tensor.shape
+        X = features_all_tensor.reshape((nsamples, nx))
 
         svc = SVC()
         model_svm = svc.fit(X, labels_tensor.numpy())
 
         labels_all = []
-        features_all_test=[]
+        features_all_test = []
         for inputs, labels, path in tqdm(test_dataloader):
                 features_test = my_model.extr_featueres(inputs)
                 features_all_test.append(features_test)
                 labels_all.append(labels)
         # print(features_all)
         features_all_test_tensor = torch.stack(features_all_test).detach().cpu().numpy()
-        features_all_test_tensor = features_all_test_tensor.reshape((features_all_test_tensor.shape[0]*features_all_test_tensor.shape[1], 64, 256, 256))
+        features_all_test_tensor = features_all_test_tensor.reshape((features_all_tensor.shape[0]*features_all_tensor.shape[1], 512))
         labels_tensor = torch.stack(labels_all)
         labels_tensor = labels_tensor.reshape((labels_tensor.shape[0] * labels_tensor.shape[1]))
 
-        nsamples, nx, ny, nz = features_all_test_tensor.shape
-        X = features_all_test_tensor.reshape((nsamples, nx * ny * nz))
+        nsamples, nx = features_all_test_tensor.shape
+        X = features_all_test_tensor.reshape((nsamples, nx))
 
         y_pred_svc = model_svm.predict(X)
         # print("\n Done")

@@ -7,9 +7,15 @@ def plot_train_history(train, val, type: str, test):
     epochs = range(len(train))
     plt.figure()
     train_acc_np = list(map(float, train))
+    mean_acc_train = sum(train_acc_np) / len(train_acc_np)
     val_acc_np = list(map(float, val))
+    mean_acc_val = sum(val_acc_np) / len(val_acc_np)
     if test is not None:
         test_acc_np = list(map(float, test))
+        mean_acc_test = sum(test_acc_np) / len(test_acc_np)
+        print(f"mean_acc_train = {mean_acc_train}, mean_acc_val = {mean_acc_val}, mean_acc_test = {mean_acc_test}")
+    else:
+        print(f"mean_acc_train = {mean_acc_train}, mean_acc_val = {mean_acc_val}")
 
     title = type
     plt.plot(epochs, train_acc_np, 'b', label=f'Training {type}')
@@ -22,16 +28,19 @@ def plot_train_history(train, val, type: str, test):
     plt.show()
 
 
-# Path = "D:\\IF\\graphiks\\exp_Lera_3.txt"
+# Path = "D:\\IF\\graphiks\\RM_linear_dropout\\RM_linear_and_dropout_seed300_ResNet_2output_after3layer_weight_decay1_summ0.3+1_input-size_1024.txt"
 # Path_test = ''  # "D:\\IF\\graphiks\\exp_Lera_2_test.txt"
-# Path = "D:\\IF\\graphiks\\ResNet_2out_MaxPooling_after4_sum0.3_input-size_1024.txt"
+# Path = "D:\\IF\\graphiks\\REPLAY_seed200_ResNet_2out_MaxPooling_after3_sum0.3_input-size_1024.txt"
 # Path = "D:\\IF\\graphiks\\MaxPooling_After3Layer_summ0.3.txt"
 # Path = "D:\\IF\\graphiks\\REPLAY_seed5_ResNet_input-size_1024.txt"
-Path = "D:\\IF\\graphiks\\mobilenet\\seed12_mobilenet_weight_decay5_input-size_1024.txt"
+# Path = "D:\\IF\\graphiks\\mobilenet\\seed12_mobilenet_weight_decay5_input-size_1024.txt"
+Path = "D:\\IF\graphiks\\repeats_maxpooling_resnet_april\\RESNET\\TOTAL\\Resnet_with_dropout\\seed79_Resnet_input_b23_wd5_q0_u0-size_1024.txt"
+# Path = "D:\\IF\graphiks\\repeats_maxpooling_resnet_april\\MAXPOOLING\\RM_linear_and_dropout_1output\\" \
+#        "seed814_ResNet_2output_maxpooling_logsoftmax_after3laye_weight_decay5_input-size_1024.txt"
 if "exp_Lera" in Path:
     Path_test = Path[:-4]+"_test.txt"
     flag_resnet_2output = 0
-elif "Original_ResNet" in Path or "ResNet_input":
+elif "Original_ResNet" in Path or "ResNet":
     Path_test = ''
     flag_resnet_2output = 0
 else:
