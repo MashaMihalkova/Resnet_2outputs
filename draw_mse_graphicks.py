@@ -1,7 +1,7 @@
 import numpy as np
 from pylab import *
-Path_to_total_mean = "D:\\IF\\total_mean_std_Resnet.txt"
-Path_to_save_mean_std_txt = "D:\\IF\\total_mean_std_all_exp.txt"
+Path_to_total_mean = "D:\\Projects\\bacteria_recognitions\\max_Resnet_2outputs_RM_DP_Lin.txt"
+Path_to_save_mean_std_txt = "D:\\Projects\\bacteria_recognitions\\total_max_all_exp.txt"
 def total_exp_mean_std(Path, Path_to_save_mean_std_txt):
     mean_ = 0
     i = 0
@@ -9,6 +9,8 @@ def total_exp_mean_std(Path, Path_to_save_mean_std_txt):
     with open(Path, 'r') as file:
         lines = file.readlines()
         for line in lines:
+            if line == '\n':
+                continue
             mean_ += float(line)
             list_mean.append(float(line))
             i += 1
@@ -19,7 +21,7 @@ def total_exp_mean_std(Path, Path_to_save_mean_std_txt):
             file.write(f"exp {Path}, std test= {b}, mean_acc_test = {mean_acc_test} \n")
 # total_exp_mean_std(Path_to_total_mean, Path_to_save_mean_std_txt)
 
-Path = "D:\\IF\\total_mean_std_all_exp.txt"
+Path = "D:\\Projects\\bacteria_recognitions\\total_max_all_exp.txt"
 test_acc = []
 mean_acc_test = []
 with open(Path, 'r') as file:
@@ -55,3 +57,43 @@ xlabel('x')
 xlabel('y')
 
 show()
+
+
+# import numpy as np
+# from pylab import *
+# Path = "D:\\Projects\\bacteria_recognitions\\saved_weights\\mean_std.txt"
+# test_acc = []
+# mean_acc_test = []
+# with open(Path, 'r') as file:
+#     lines = file.readlines()
+#     for line in lines:
+#         # print('1')
+#         start = line.index("test=")
+#         start_ = line.index("mean_acc_test")
+#         # print(start)
+#         end = line.index(", mean_acc_test")
+#         end_ = line.index("\n")
+#         # print(line[start + 1:end - 1])
+#         test_acc.append(line[start + 6:end - 1])
+#         mean_acc_test.append(line[start_ + 16:end_-1])
+#
+# test_acc_np = list(map(float, test_acc))
+# mean_acc_test = list(map(float, mean_acc_test))
+# a_std = test_acc_np
+# b_mean = mean_acc_test
+# kol_exp = np.arange(len(b_mean))
+# # plot(mean_acc_test, b_mean, 'r-')  # 'r' means with red color and '-' means with dashed line style
+# # bar(a, b, color='red')
+# # It is ready at this point, but we would like to add error bars:
+# e = b_mean#0.2 * abs(randn(1))  # prepare errorbar from random numbers
+#
+# errorbar(kol_exp, mean_acc_test, a_std, fmt='.', label='y=std')  # vertical symmetric
+#
+# # Now, we plan to add a legend and axes labels:
+#
+# legend()  # the label command in errorbar contains the legend
+#
+# xlabel('x')
+# xlabel('y')
+#
+# show()
