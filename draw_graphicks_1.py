@@ -2,6 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from pylab import *
 
 def plot_train_history(train, val, type: str, test):
     epochs = range(len(train))
@@ -22,26 +23,43 @@ def plot_train_history(train, val, type: str, test):
     plt.plot(epochs, val_acc_np, 'r', label=f'Validation {type}')
     if test is not None:
         plt.plot(epochs, test_acc_np, 'g', label=f'Test {type}')
+
+        # a = test_acc_np
+        # b = np.std(a)
+        # print("std test= ", b)
+        # with open(Path, 'a+') as file:
+        #     file.write(f"exp {}, std test= {b}, mean_acc_test = {mean_acc_test}")
+        # plot(mean_acc_test, b, 'r-')  # 'r' means with red color and '-' means with dashed line style
+        # bar(a, b, color='red')
+        # It is ready at this point, but we would like to add error bars:
+        # e = b#0.2 * abs(randn(1))  # prepare errorbar from random numbers
+        # errorbar(0, mean_acc_test, e, fmt='.', label='y=std test(x)')  # vertical symmetric
+
+        # Now, we plan to add a legend and axes labels:
+
+        # legend()  # the label command in errorbar contains the legend
+        #
+        # xlabel('x')
+        # xlabel('y')
+
+        # show()
     plt.title(title)
     plt.legend()
 
     plt.show()
 
 
-# Path = "D:\\IF\\graphiks\\RM_linear_dropout\\RM_linear_and_dropout_seed300_ResNet_2output_after3layer_weight_decay1_summ0.3+1_input-size_1024.txt"
+# Path = "D:\\IF\\graphiks\\exp_Lera_3.txt"
 # Path_test = ''  # "D:\\IF\\graphiks\\exp_Lera_2_test.txt"
-# Path = "D:\\IF\\graphiks\\REPLAY_seed200_ResNet_2out_MaxPooling_after3_sum0.3_input-size_1024.txt"
-# Path = "D:\\IF\\graphiks\\MaxPooling_After3Layer_summ0.3.txt"
-# Path = "D:\\IF\\graphiks\\REPLAY_seed5_ResNet_input-size_1024.txt"
-# Path = "D:\\IF\\graphiks\\mobilenet\\seed12_mobilenet_weight_decay5_input-size_1024.txt"
-# Path = "D:\\IF\graphiks\\repeats_maxpooling_resnet_april\\RESNET\\TOTAL\\Resnet_with_dropout\\seed79_Resnet_input_b23_wd5_q0_u0-size_1024.txt"
-# Path = "D:\\IF\graphiks\\repeats_maxpooling_resnet_april\\MAXPOOLING\\RM_linear_and_dropout_1output\\" \
-#        "seed814_ResNet_2output_maxpooling_logsoftmax_after3laye_weight_decay5_input-size_1024.txt"
-Path = "D:\\IF\graphiks\\LS\\ls05\\seed17_ResNet_weight_decay5_val_without_colorjitter_input-size_1024.txt"
+# Path = "D:\\IF\\graphiks\\ResNet_2out_MaxPooling_after4_sum0.3_input-size_1024.txt"
+Path = "D:\\IF\\graphiks\\RM_linear_dropout\\RM_linear_and_dropout_seed300_ResNet_2output_after3layer_weight_decay1_summ0.3+1_input-size_1024.txt"
+# Path = "D:\\Projects\\bacteria_recognitions\\saved_weights\\Exp_Resnet_total\\Resnet_RM_dropout\\seed99_Resnet_input_b23_wd5_q0_u1-size_1024\\otchet.txt"
+Path_to_mean_std_txt = "D:\\IF\\mean_std_Resnet_2outputs_RM_DP_LIN.txt"
+# Path = "D:\\Projects\\bacteria_recognitions\\NEW_DATA\\RESNET\\EXP_BS\\seed895_Resnet_input_b16_wd5_q0_u0-size_1024.txt"
 if "exp_Lera" in Path:
     Path_test = Path[:-4]+"_test.txt"
     flag_resnet_2output = 0
-elif "Original_ResNet" in Path or "ResNet":
+elif "Original_ResNet" in Path:# or "ResNet_input":
     Path_test = ''
     flag_resnet_2output = 0
 else:
@@ -215,7 +233,14 @@ if not test_loss:
     plot_train_history(train_acc, val_acc, "accuracy", test=test_acc)
     plot_train_history(train_loss, val_loss, "loss", test=None)
 else:
-    plot_train_history(train_acc, val_acc, "accuracy", test=test_acc)
-    plot_train_history(train_loss, val_loss, "loss", test=test_loss)
-    plot_train_history(train_acc_2out, val_acc_2out, "accuracy", test=test_acc_2out)
-    plot_train_history(train_loss_2out, val_loss_2out, "loss", test=test_loss_2out)
+    # plot_train_history(train_acc, val_acc, "accuracy", test=test_acc)
+    # plot_train_history(train_loss, val_loss, "loss", test=test_loss)
+
+    test_acc_np = list(map(float, test_acc))
+    mean_acc_test = sum(test_acc_np) / len(test_acc_np)
+    b = np.std(test_acc_np)
+    with open(Path_to_mean_std_txt, 'a+') as file:
+        file.write(f"exp {Path}, std test= {b}, mean_acc_test = {mean_acc_test} \n")
+    # if "Original_ResNet" in Path :#or "ResNet_input":
+    #     plot_train_history(train_acc_2out, val_acc_2out, "accuracy", test=test_acc_2out)
+    #     plot_train_history(train_loss_2out, val_loss_2out, "loss", test=test_loss_2out)
