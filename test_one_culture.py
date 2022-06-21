@@ -87,13 +87,18 @@ def tensors2array_classes(_tensors_classes):
 def test_model(_model, _test_dataloader, _device):
     arr_tensors_classes = []  # массив тензоров, где в каждом тензоре массив из BATCH_SIZE_TEST чисел, указывающих на класс
     _model.eval()
+    sum_preds = []
     for inputs, labels, paths in tqdm(_test_dataloader):
         inputs = torch.unsqueeze(inputs, dim=1)
         inputs = inputs.to(_device)
         # labels = labels.to(_device)
+
         with torch.set_grad_enabled(False):
             preds = _model(inputs)
+            sum_preds.append(preds)
             arr_tensors_classes.append(torch.argmax(preds, dim=1))
+    sum_per_calsses_arr_tensors_classes = sum(sum_preds[i][0] for i in range(len(sum_preds)))
+    summ_per_class_max_class = torch.argmax(sum_per_calsses_arr_tensors_classes, dim=0)
     mean_prediction = [np.array(arr_tensors_classes[batch]) for batch in range(len(arr_tensors_classes))]
     mean_prediction = np.array(mean_prediction)
     mean_prediction = np.hstack(mean_prediction).tolist()
@@ -101,7 +106,7 @@ def test_model(_model, _test_dataloader, _device):
 
     predicted_classes = tensors2array_classes(arr_tensors_classes)  # массив предсказанных классов
 
-    return predicted_classes, mean_prediction, mean_prediction_max_freq
+    return predicted_classes, mean_prediction, mean_prediction_max_freq, sum_per_calsses_arr_tensors_classes, summ_per_class_max_class
 
 
 def print_results_csv(_filename, full=True):
@@ -400,7 +405,7 @@ try:
                 targets.append(test_dataset.imgs[ii][1])
                 test_dataloader_one_class.append(test_dataloader.dataset[ii])
         kol += BATCH_SIZE_TEST[class_]
-        predicted_classes, mean_pred_classes, mean_prediction_max_freq = test_model(model, test_dataloader_one_class, device)
+        predicted_classes, mean_pred_classes, mean_prediction_max_freq, sum_per_calsses, max_class = test_model(model, test_dataloader_one_class, device)
 
         print_results_as_table(OUTPUT_RESULTS)
 
@@ -412,6 +417,8 @@ try:
         print('mean_prediction = ', mean_pred_classes)
         print('mean_prediction_max_freq = ', mean_prediction_max_freq)
         print('target_classes = ', targets[0])
+        print('sum_per_calsses = ', sum_per_calsses)
+        print('max_class = ', max_class)
         print('acc mean_pred_classes = ', np.sum(np.asarray(targets[0]) == np.asarray(mean_prediction_max_freq)))
 
         targets_new = []
