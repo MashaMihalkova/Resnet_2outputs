@@ -16,7 +16,8 @@ from torch import Tensor
 from torchvision import models
 from typing import Tuple, Optional
 import cv2
-
+import pickle
+# Источник: https://pythonim.ru/moduli/pickle-python?
 '''
     About implementation,
     you just have to train a neural network,
@@ -36,9 +37,9 @@ optimizer = 'Adam'
 shedule_step = 5
 log_folder = 'ResNet18_greyscale'
 device = "cpu"
-PATH_TO_TRAIN = "D:\\IF\\project_bacteria_recognition\\split_2021_2022\\train_val_sbalans\\train_svm"
-PATH_TO_VAL = "D:\\IF\\project_bacteria_recognition\\split_2021_2022\\train_val_sbalans\\val"
-PATH_TO_TEST = "D:\\IF\\project_bacteria_recognition\\split_2021_2022\\test_svm"
+PATH_TO_TRAIN = "D:\\Projects\\bacteria_recognitions\\datasets\\2021_2022\\our_data\\train_val_sbalans\\train"
+PATH_TO_VAL = "D:\\Projects\\bacteria_recognitions\\datasets\\2021_2022\\our_data\\train_val_sbalans\\val"
+PATH_TO_TEST = "D:\\Projects\\bacteria_recognitions\\datasets\\2021_2022\\our_data\\train_val_sbalans\\test"
 
 # train_dataloader, val_dataloader, test_dataloader = create_dataset(PATH_TO_TRAIN, PATH_TO_VAL, PATH_TO_TEST, "grey",
 #                                                                    batch_size, num_workers)
@@ -49,13 +50,15 @@ train_dataset, train_dataloader = load_images(PATH_TO_TRAIN, 'grey', batch_size,
 test_dataset, test_dataloader = load_images(PATH_TO_TEST, 'grey', batch_size, num_workers)
 
 # загрузка предобученной сети
-PATH = 'D:\\IF\\project_bacteria_recognition\\cnn+svm\\3'
+# PATH = 'D:\\IF\\project_bacteria_recognition\\cnn+svm\\3'
+PATH = 'D:\\Projects\\bacteria_recognitions\\saved_weights\\Exp_Resnet_total\\Resnet_RM_dropout\\seed10_Resnet_input_b23_wd5_q0_u1-size_1024\\3'
 num_class = 23
-model = models.resnet18(pretrained=False)
+model = models.resnet18(pretrained=True)
 model.conv1 = torch.nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
 model.fc = torch.nn.Linear(model.fc.in_features, num_class)
-model.load_state_dict(torch.load(PATH, map_location=torch.device('cpu')))
+# model.load_state_dict(torch.load(PATH, map_location=torch.device('cpu')))
 model.eval()
+model.to('cpu')
 list(model.modules())
 my_model = nn.Sequential(*list(model.modules())[:-1])
 # сохранение всех признаков по всем картинкам из обуч выборке
@@ -63,12 +66,12 @@ my_model = nn.Sequential(*list(model.modules())[:-1])
 class My_model(nn.Module):
     def __init__(self, layer_number:int = 3, num_classes: int = 1000, color_or_grey: str = "grey", PATH: str='') -> None:
         super(My_model, self).__init__()
-        model = models.resnet18(pretrained=False)
+        model = models.resnet18(pretrained=True)
         if color_or_grey == 'grey':
             model.conv1 = torch.nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         model.fc = torch.nn.Linear(model.fc.in_features, num_class)
-        model.load_state_dict(torch.load(PATH, map_location=torch.device('cpu')))
-        # model.eval()
+        # model.load_state_dict(torch.load(PATH, map_location=torch.device('cpu')))
+        model.eval()
         model1 = list(model.children())
         self.conv1 = model1[0]
         self.bn1 = model1[1]
@@ -113,8 +116,27 @@ if __name__ == '__main__':
         labels_all = []
         for inputs, labels, path in tqdm(dataloader):
                 features = my_model.extr_featueres(inputs)
-                features_all.append(features)
-                labels_all.append(labels)
+                # torch.save(features, 'features.txt')
+                # torch.save(labels, 'labels.txt')
+                # with open('features.txt', 'a+') as file:
+                    # file.write(np.array(features.detach()))
+                    # k = np.array(features.detach())
+                    # np.save(file, np.array(features.detach()))
+                # with open('labels.txt', 'a+') as file1:
+                    # file1.write(np.array(labels.detach()))
+                    # np.save(file1, np.array(labels.detach()))
+                # file = open('features', 'a+')
+                # pickle.dump(features, file)
+                # file.write(features)
+                # file.close()
+
+                # features_all.append(features)
+                # file1 = open('labels', 'a+')
+                # pickle.dump(labels, file1)
+                # file.write(labels)
+                # file.close()
+
+                # labels_all.append(labels)
         # print(features_all)
         features_all_tensor = torch.stack(features_all)
         features_all_tensor = features_all_tensor.reshape((features_all_tensor.shape[0]*features_all_tensor.shape[1], 512)).detach().cpu().numpy()
